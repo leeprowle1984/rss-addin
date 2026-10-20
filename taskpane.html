@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RSS Survey Assistant</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<script src="data.js"></script>
+<script src="ooxml.js"></script>
+<style>
+  :root { --brand:#1F4E5A; --accent:#2E8B88; --bg:#F5F8F9; --line:#D5DEE0; --text:#1d2b30; --muted:#6b7b80; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:13px/1.4 "Segoe UI", Arial, sans-serif; color:var(--text); background:#fff; }
+  header { background:var(--brand); color:#fff; padding:10px 12px; }
+  header h1 { margin:0; font-size:15px; }
+  header p { margin:2px 0 0; font-size:11px; opacity:.8; }
+  nav { display:flex; border-bottom:1px solid var(--line); background:var(--bg); position:sticky; top:0; z-index:2; }
+  nav button { flex:1; border:0; background:none; padding:9px 2px; font-size:12px; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; }
+  nav button.on { color:var(--brand); font-weight:600; border-bottom-color:var(--accent); }
+  section { display:none; padding:12px; }
+  section.on { display:block; }
+  h2 { font-size:13px; color:var(--brand); margin:14px 0 6px; }
+  h2:first-child { margin-top:0; }
+  .hint { color:var(--muted); font-size:12px; margin:0 0 8px; }
+  button.btn { border:1px solid var(--accent); background:var(--accent); color:#fff; border-radius:4px; padding:7px 10px; font-size:12px; cursor:pointer; }
+  button.btn.ghost { background:#fff; color:var(--accent); }
+  button.btn:disabled { opacity:.5; cursor:default; }
+  .row { display:flex; gap:6px; align-items:center; margin-bottom:6px; }
+  input[type=text], input[type=password], select, textarea { width:100%; border:1px solid var(--line); border-radius:4px; padding:6px 7px; font:inherit; }
+  textarea { min-height:110px; resize:vertical; }
+  details.ch { border:1px solid var(--line); border-radius:5px; margin-bottom:6px; }
+  details.ch summary { padding:7px 9px; cursor:pointer; font-weight:600; color:var(--brand); list-style:none; display:flex; justify-content:space-between; align-items:center; }
+  details.ch summary::-webkit-details-marker { display:none; }
+  details.ch summary small { font-weight:400; color:var(--accent); white-space:nowrap; margin-left:8px; }
+  .el { display:block; width:100%; text-align:left; border:0; border-top:1px solid var(--line); background:#fff; padding:6px 9px 6px 14px; cursor:pointer; font-size:12px; }
+  .el:hover, .lab:hover, .w:hover { background:var(--bg); }
+  .lab { display:flex; gap:8px; align-items:flex-start; width:100%; text-align:left; border:1px solid var(--line); background:#fff; border-radius:5px; padding:6px 8px; margin-bottom:5px; cursor:pointer; }
+  .sw { flex:0 0 12px; height:12px; border-radius:3px; margin-top:3px; }
+  .lab b { display:block; font-size:12px; }
+  .lab span { color:var(--muted); font-size:11px; }
+  .w { border:1px solid var(--line); border-radius:5px; padding:7px 8px; margin-bottom:5px; cursor:pointer; }
+  .w b { font-size:12px; color:var(--brand); }
+  .w .k { float:right; font-size:10px; color:var(--muted); text-transform:uppercase; }
+  .w p { margin:3px 0 0; font-size:11px; color:var(--muted); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  #status { position:fixed; bottom:0; left:0; right:0; padding:8px 12px; font-size:12px; background:var(--brand); color:#fff; display:none; }
+  #status.err { background:#B71C1C; }
+  .preview { border:1px solid var(--line); background:var(--bg); border-radius:5px; padding:8px; margin:8px 0; font-size:12px; }
+  .preview .pl { display:inline-block; color:#fff; border-radius:3px; padding:1px 6px; font-weight:600; font-size:11px; }
+  .preview ul { margin:4px 0; padding-left:18px; }
+  .preview h4 { margin:8px 0 2px; font-size:12px; color:var(--accent); }
+  .results li { margin-bottom:3px; }
+  label.l { display:block; font-size:11px; color:var(--muted); margin:8px 0 3px; }
+  .pad { height:40px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>RSS Survey Assistant</h1>
+  <p>Level 3 Building Survey under the Residential Survey Standard</p>
+</header>
+<nav>
+  <button data-t="sections" class="on">Sections</button>
+  <button data-t="labels">Labels</button>
+  <button data-t="wording">Wording</button>
+  <button data-t="ai">AI Writer</button>
+  <button data-t="check">Check</button>
+</nav>
+
+<section id="sections" class="on">
+  <p class="hint">Click where you want it in the report, then pick an element. Each one comes as a box with a condition label, text boxes and a row of photo boxes. <b>+ chapter</b> inserts a whole chapter.</p>
+  <div id="chapterList"></div>
+  <h2>Add a custom element</h2>
+  <p class="hint">For a second roof, another elevation or anything unusual.</p>
+  <div class="row"><select id="customCh"></select></div>
+  <div class="row"><input id="customName" type="text" placeholder="e.g. D2a Roof Coverings (rear addition)"></div>
+  <button class="btn" id="customBtn">Insert element</button>
+  <h2>Add photos</h2>
+  <p class="hint">Click inside an element's box, then pick as many photos as you like. They fill the photo boxes, with new rows added as needed, and are never cropped. Outside a box (e.g. the cover), they go in at the cursor, full width.</p>
+  <button class="btn" id="photoBtn">Add photos</button>
+  <input type="file" id="photoFile" accept="image/*" multiple style="display:none">
+  <div class="pad"></div>
+</section>
+
+<section id="labels">
+  <p class="hint">Click anywhere inside an element's box, then pick its condition label. You can also use the drop-down in the box.</p>
+  <div id="labelList"></div>
+  <h2>Summary table</h2>
+  <p class="hint">Builds the table in section B2 from every condition label in the report.</p>
+  <button class="btn" id="summaryBtn">Update summary</button>
+  <div class="pad"></div>
+</section>
+
+<section id="wording">
+  <div class="row"><input id="wSearch" type="text" placeholder="Search standard wording"></div>
+  <div class="row"><select id="wCat"></select></div>
+  <div id="wList"></div>
+  <div class="pad"></div>
+</section>
+
+<section id="ai">
+  <p class="hint">Dictate or paste your site notes for one element. The AI drafts it in house style for you to check before it goes in.</p>
+  <label class="l" for="aiEl">Element</label>
+  <select id="aiEl"></select>
+  <label class="l" for="aiNotes">Site notes</label>
+  <textarea id="aiNotes" placeholder="e.g. Front pitch Redland Cambrian, some slipped tiles over bay, ridge pointing loose, no felt seen from loft hatch..."></textarea>
+  <label class="l" for="aiProp">Property context (kept for this property)</label>
+  <input id="aiProp" type="text" placeholder="e.g. 1930s semi, cavity walls, London clay">
+  <div class="row" style="margin-top:10px">
+    <button class="btn" id="aiDraft">Draft from notes</button>
+    <button class="btn ghost" id="aiRewrite">Rewrite selection</button>
+  </div>
+  <div id="aiOut"></div>
+  <h2 style="margin-top:20px">Whole report</h2>
+  <p class="hint">Paste or dictate all your site notes for the job. Start each element with its code, e.g. "D2 front pitch slipped tiles over bay. E1 loft no felt seen." Every element is drafted at once for you to check before anything goes in.</p>
+  <textarea id="wrNotes" style="min-height:180px" placeholder="D1 chimney rear stack, pointing eroded, flaunching cracked...&#10;D2 front pitch Redland Cambrian, slipped tiles over bay...&#10;F1 consumer unit 2008, not tested..."></textarea>
+  <div class="row" style="margin-top:8px"><button class="btn" id="wrDraft">Draft whole report</button></div>
+  <div id="wrOut"></div>
+  <details style="margin-top:14px">
+    <summary style="cursor:pointer;color:var(--brand);font-weight:600">AI settings</summary>
+    <label class="l" for="apiKey">Claude API key (stored on this computer only)</label>
+    <input id="apiKey" type="password" placeholder="sk-ant-...">
+    <label class="l" for="model">Model</label>
+    <input id="model" type="text">
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="saveSettings">Save settings</button></div>
+  </details>
+  <div class="pad"></div>
+</section>
+
+<section id="check">
+  <p class="hint">Finds empty text boxes, elements without a label, and house-style words to avoid (highlighted in turquoise).</p>
+  <div class="row">
+    <button class="btn" id="checkBtn">Check report</button>
+    <button class="btn ghost" id="clearBtn">Clear highlights</button>
+  </div>
+  <div id="checkOut"></div>
+  <h2>Ready for PDF</h2>
+  <p class="hint">Removes empty photo rows, so elements with no photos print cleanly. Run it last, before saving as PDF.</p>
+  <button class="btn" id="tidyBtn">Tidy for PDF</button>
+  <div class="pad"></div>
+</section>
+
+<div id="status"></div>
+
+<script>
+"use strict";
+var $ = function (id) { return document.getElementById(id); };
+var REC_HEADING = "Recommendations and Remedial Works";
+var DEFAULT_MODEL = "claude-sonnet-5-5";
+var lastDraft = null;
+
+/* ---------- helpers ---------- */
+function status(msg, isErr) {
+  var s = $("status");
+  s.textContent = msg; s.className = isErr ? "err" : ""; s.style.display = "block";
+  clearTimeout(status.t); status.t = setTimeout(function () { s.style.display = "none"; }, isErr ? 7000 : 3000);
+}
+function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function store(k, v) { try { if (v === undefined) return localStorage.getItem("rss." + k); localStorage.setItem("rss." + k, v); } catch (e) { return null; } }
+function labelColour(name) { var l = RSS.labels.filter(function (x) { return x.name === name; })[0]; return l ? l.colour : null; }
+function allElements() {
+  var out = [];
+  RSS.chapters.forEach(function (ch) { ch.elements.forEach(function (el) { out.push({ ch: ch, el: el, title: el.code + " " + el.name }); }); });
+  return out;
+}
+function codeOf(title) { return String(title).trim().split(/\s+/)[0]; }
+function chapterOf(title) { var c = codeOf(title).charAt(0); return RSS.chapters.filter(function (x) { return x.code === c; })[0]; }
+function hasRec(title) {
+  var f = allElements().filter(function (x) { return x.title === title || x.el.code === codeOf(title); })[0];
+  if (f) return f.el.rec !== false;
+  var ch = chapterOf(title); return !(ch && ch.elements[0] && ch.elements[0].rec === false);
+}
+function hasPhotos(title) { var ch = chapterOf(title); return !(ch && ["H", "I", "J"].indexOf(ch.code) > -1); }
+function clean(t) {
+  return String(t || "").replace(/(\d)\s*[–—]\s*(\d)/g, "$1 to $2").replace(/\s*[–—]\s*/g, ", ").trim();
+}
+function xmlEsc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function inWord() { return typeof Word !== "undefined" && Office.context && Office.context.document; }
+function run(fn) {
+  if (!inWord()) { status("Open this in Word to use it.", true); return Promise.resolve(); }
+  return Word.run(fn).catch(function (e) { console.error(e); status(e.message || String(e), true); });
+}
+
+/* ---------- Word content (boxes) ---------- */
+function fill(snippet, code, title) {
+  return snippet.split("__CODE__").join(xmlEsc(code)).split("__TITLE__").join(xmlEsc(title))
+    .replace(/__ID__/g, function () { return String(100000 + Math.floor(Math.random() * 2000000000)); });
+}
+function pkg(bodyXml) {
+  var W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  return '<pkg:package xmlns:pkg="http://schemas.microsoft.com/office/2006/xmlPackage">' +
+    '<pkg:part pkg:name="/_rels/.rels" pkg:contentType="application/vnd.openxmlformats-package.relationships+xml"><pkg:xmlData>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' +
+    '</pkg:xmlData></pkg:part>' +
+    '<pkg:part pkg:name="/word/document.xml" pkg:contentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"><pkg:xmlData>' +
+    '<w:document ' + W + '><w:body>' + bodyXml + '<w:p/></w:body></w:document></pkg:xmlData></pkg:part>' +
+    '</pkg:package>';
+}
+function elementXml(title, rec, photos) {
+  var key = "element_" + (rec ? "rec" : "norec") + "_" + (photos ? "photos" : "nophotos");
+  return fill(RSS.snippets[key], codeOf(title), title);
+}
+/* Inserts Word content on a new line after the cursor's paragraph. */
+async function insertXmlAtCursor(ctx, bodyXml) {
+  var p = ctx.document.getSelection().paragraphs.getLast();
+  p.load("text,tableNestingLevel"); await ctx.sync();
+  var target;
+  if (p.tableNestingLevel > 0) {
+    var t = p.parentTable; target = t.insertParagraph("", "After");
+  } else if (!p.text.trim()) { target = p; }
+  else { target = p.insertParagraph("", "After"); }
+  target.insertOoxml(pkg(bodyXml), "Replace");
+  await ctx.sync();
+}
+
+function insertElement(title, rec, photos) {
+  return run(async function (ctx) { await insertXmlAtCursor(ctx, elementXml(title, rec, photos)); status("Inserted " + title); });
+}
+function insertChapter(ch) {
+  return run(async function (ctx) {
+    var x = fill(RSS.snippets.heading1, ch.code, ch.code + "  " + ch.name);
+    ch.elements.forEach(function (el) { var t = el.code + " " + el.name; x += elementXml(t, el.rec !== false, hasPhotos(t)); });
+    if (["D", "E", "F", "G"].indexOf(ch.code) > -1) x += fill(RSS.snippets.advice, ch.code, ch.code + " General Advice");
+    await insertXmlAtCursor(ctx, x);
+    status("Inserted chapter " + ch.code);
+  });
+}
+/* ---------- photos ----------
+   Photos are resized (longest side 1600px) to keep the report small, never cropped. */
+function readPhoto(file) {
+  return new Promise(function (resolve, reject) {
+    var fr = new FileReader();
+    fr.onerror = reject;
+    fr.onload = function () {
+      var img = new Image();
+      img.onerror = reject;
+      img.onload = function () {
+        var s = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement("canvas");
+        c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        resolve({ b64: c.toDataURL("image/jpeg", 0.85).split(",")[1], w: c.width, h: c.height, name: file.name });
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+function fitPicture(pic, photo, maxW, maxH) {
+  var w = maxW, h = maxW * photo.h / photo.w;
+  if (h > maxH) { h = maxH; w = maxH * photo.w / photo.h; }
+  pic.lockAspectRatio = true; pic.width = w; pic.height = h;
+}
+function isLabelRow(first) {
+  var names = Object.keys(RSS.rows).map(function (k) { return RSS.rows[k]; });
+  return names.indexOf(String(first || "").trim()) > -1;
+}
+/* The element box the cursor is in, or null. */
+async function elementTableAtCursor(ctx) {
+  var lab = await labelAtCursor(ctx);
+  if (!lab) return null;
+  var t = lab.parentTableOrNullObject;
+  var st = ctx.document.getSelection().parentTableOrNullObject;
+  await ctx.sync();
+  if (t.isNullObject || st.isNullObject) return null;
+  var cmp = t.getRange("Whole").compareLocationWith(st.getRange("Whole"));
+  await ctx.sync();
+  return cmp.value === "Equal" ? { table: t, label: lab } : null;
+}
+async function addPhotoFiles(files) {
+  if (!files.length) return;
+  status("Preparing " + files.length + " photo" + (files.length > 1 ? "s" : "") + "...");
+  var photos = [];
+  for (var i = 0; i < files.length; i++) { try { photos.push(await readPhoto(files[i])); } catch (e) { console.error(e); } }
+  return run(async function (ctx) {
+    await checkStyles(ctx);
+    var el = await elementTableAtCursor(ctx);
+    if (!el) {
+      /* Not in an element box (e.g. the cover): put the photos at the cursor, full width. */
+      var p = ctx.document.getSelection().paragraphs.getLast();
+      photos.forEach(function (ph) {
+        var np = p.insertParagraph("", "After"); np.alignment = "Centered";
+        fitPicture(np.insertInlinePictureFromBase64(ph.b64, "Start"), ph, 453, 340);
+        p = np;
+      });
+      await ctx.sync();
+      status("Added " + photos.length + " photo" + (photos.length > 1 ? "s" : ""));
+      return;
+    }
+    var t = el.table; t.load("rowCount,values"); await ctx.sync();
+    var slots = [];
+    function collect(from) {
+      var cells = [];
+      for (var r = from; r < t.rowCount; r++) {
+        if (r === 0 || isLabelRow(t.values[r] && t.values[r][0])) continue;
+        for (var c = 0; c < 2; c++) {
+          var cell = t.getCell(r, c); var pics = cell.body.inlinePictures; pics.load("items");
+          cells.push({ cell: cell, pics: pics });
+        }
+      }
+      return cells;
+    }
+    var cells = collect(1); await ctx.sync();
+    cells.forEach(function (x) { if (!x.pics.items.length) slots.push(x.cell); });
+    var needed = photos.length - slots.length;
+    if (needed > 0) {
+      var before = t.rowCount, rows = Math.ceil(needed / 2);
+      t.addRows("End", rows, Array(rows).fill(["", ""]));
+      await ctx.sync();
+      t.load("rowCount,values"); await ctx.sync();
+      for (var r = before; r < t.rowCount; r++) {
+        for (var c = 0; c < 2; c++) {
+          var cell = t.getCell(r, c);
+          var cap = cell.body.insertParagraph("", "End");
+          if (hasStyle("RSS Caption")) cap.style = "RSS Caption"; else { cap.alignment = "Centered"; cap.font.italic = true; cap.font.size = 8.5; }
+          slots.push(cell);
+        }
+      }
+      await ctx.sync();
+    }
+    photos.forEach(function (ph, i) {
+      var first = slots[i].body.paragraphs.getFirst();
+      first.alignment = "Centered";
+      fitPicture(first.insertInlinePictureFromBase64(ph.b64, "Start"), ph, 225, 300);
+    });
+    await ctx.sync();
+    status("Added " + photos.length + " photo" + (photos.length > 1 ? "s" : "") + " to " + el.label.title);
+  });
+}
+
+var styleNames = null;
+async function checkStyles(ctx) {
+  if (styleNames) return;
+  styleNames = [];
+  if (Office.context.requirements.isSetSupported("WordApi", "1.5")) {
+    var st = ctx.document.getStyles(); st.load("items/nameLocal"); await ctx.sync();
+    styleNames = st.items.map(function (s) { return s.nameLocal; });
+  }
+}
+function hasStyle(n) { return styleNames && styleNames.indexOf(n) > -1; }
+
+/* ---------- find the element at the cursor ---------- */
+async function labelAtCursor(ctx) {
+  var sel = ctx.document.getSelection();
+  var parent = sel.parentContentControlOrNullObject; parent.load("tag,title,type,text");
+  var ccs = ctx.document.contentControls.getByTag("rss-label"); ccs.load("items/title,items/type,items/text");
+  await ctx.sync();
+  if (!parent.isNullObject && parent.tag === "rss-label") return parent;
+  var comps = ccs.items.map(function (cc) { return cc.getRange("Whole").compareLocationWith(sel); });
+  await ctx.sync();
+  var found = null;
+  comps.forEach(function (c, i) { if (["Before", "AdjacentBefore", "Equal", "Contains", "InsideStart", "InsideEnd", "Inside"].indexOf(c.value) > -1) found = ccs.items[i]; });
+  return found;
+}
+
+async function setLabelOn(ctx, cc, name) {
+  var colour = labelColour(name);
+  try {
+    if (cc.type === "DropDownList" && Office.context.requirements.isSetSupported("WordApi", "1.9")) {
+      cc.dropDownListContentControl.selectItem(name);
+    } else {
+      cc.insertText(name, "Replace");
+    }
+    cc.font.color = colour; cc.font.bold = true;
+    await ctx.sync();
+    return cc;
+  } catch (e) {
+    /* Older Word: swap the drop-down for a plain labelled control */
+    var title = cc.title;
+    var r = cc.getRange("Whole").insertText(name, "After");
+    var ncc = r.insertContentControl(); ncc.tag = "rss-label"; ncc.title = title;
+    ncc.font.color = colour; ncc.font.bold = true;
+    cc.delete(false);
+    await ctx.sync();
+    return ncc;
+  }
+}
+function setLabel(name) {
+  return run(async function (ctx) {
+    var cc = await labelAtCursor(ctx);
+    if (!cc) { status("Click inside an element's box first.", true); return; }
+    await setLabelOn(ctx, cc, name);
+    status(cc.title + ": " + name);
+  });
+}
+
+/* ---------- summary table ---------- */
+function updateSummary() {
+  return run(async function (ctx) {
+    var ccs = ctx.document.contentControls.getByTag("rss-label"); ccs.load("items/title,items/text");
+    var target = ctx.document.contentControls.getByTag("rss-summary").getFirstOrNullObject();
+    await ctx.sync();
+    if (!ccs.items.length) { status("No condition labels found in this document.", true); return; }
+    var td = "border:1px solid #BFC9CC;padding:4px 6px;font-family:Arial;font-size:9.5pt;";
+    var html = '<table style="border-collapse:collapse;width:100%"><tr>' +
+      '<td style="' + td + 'background:#1F4E5A;color:#FFFFFF;font-weight:bold">Element</td>' +
+      '<td style="' + td + 'background:#1F4E5A;color:#FFFFFF;font-weight:bold">Condition label</td></tr>';
+    var unset = 0;
+    ccs.items.forEach(function (cc) {
+      var name = (cc.text || "").trim(), colour = labelColour(name);
+      if (!colour) { unset++; name = "Not yet labelled"; }
+      html += '<tr><td style="' + td + '">' + esc(cc.title) + '</td>' +
+        '<td style="' + td + (colour ? "background:" + colour + ";color:#FFFFFF;font-weight:bold" : "color:#808080;font-style:italic") + '">' + esc(name) + "</td></tr>";
+    });
+    html += "</table>";
+    if (target.isNullObject) {
+      var p = ctx.document.getSelection().paragraphs.getLast().insertParagraph("", "After");
+      target = p.insertContentControl(); target.tag = "rss-summary"; target.title = "Summary of condition labels";
+    }
+    target.insertHtml(html, "Replace");
+    await ctx.sync();
+    status("Summary updated" + (unset ? " (" + unset + " not yet labelled)" : ""));
+  });
+}
+
+
+/* ---------- writing into a box ---------- */
+/* Writes lines into a table cell: fills it if empty, otherwise adds the lines at the end. */
+async function writeCell(ctx, cell, texts, bullets) {
+  texts = texts.filter(Boolean);
+  if (!texts.length) return;
+  var body = cell.body; body.load("text"); await ctx.sync();
+  var start = 0;
+  if (!body.text.trim()) {
+    var first = body.paragraphs.getFirst();
+    first.insertText(texts[0], "Replace");
+    if (bullets) first.styleBuiltIn = "ListBullet";
+    start = 1;
+  }
+  for (var i = start; i < texts.length; i++) {
+    var p = body.insertParagraph(texts[i], "End");
+    if (bullets) p.styleBuiltIn = "ListBullet";
+  }
+  await ctx.sync();
+}
+function insertWording(w) {
+  return run(async function (ctx) {
+    var p = ctx.document.getSelection().paragraphs.getLast(); p.load("text"); await ctx.sync();
+    var np;
+    if (p.text.trim()) np = p.insertParagraph(w.text, "After");
+    else { p.insertText(w.text, "Replace"); np = p; }
+    if (w.kind === "bullet") np.styleBuiltIn = "ListBullet";
+    await ctx.sync();
+    status("Inserted: " + w.title);
+  });
+}
+
+/* ---------- report check and tidy ---------- */
+var CHECKS = [
+  { find: "good", why: "Use 'satisfactory' instead of 'good'" },
+  { find: "cheap", why: "No cost descriptors" },
+  { find: "inexpensive", why: "No cost descriptors" },
+  { find: "binoculars", why: "Do not mention binoculars" },
+  { find: "chartered surveyor", why: "Do not describe the surveyor as chartered" },
+  { find: "floor area", why: "Do not state floor area" },
+  { find: "square met", why: "Do not state floor area", partial: true },
+  { find: "valuation", why: "Do not mention valuations" },
+  { find: "reasonable purchase", why: "No purchase advice" },
+  { find: "—", why: "Em dash", partial: true },
+  { find: "–", why: "En dash", partial: true }
+];
+/* Every element box in the report: [{label, table}] with table values loaded. */
+async function elementBoxes(ctx) {
+  var labs = ctx.document.contentControls.getByTag("rss-label"); labs.load("items/title,items/text");
+  await ctx.sync();
+  var out = labs.items.map(function (l) { var t = l.parentTableOrNullObject; t.load("rowCount,values"); return { label: l, table: t }; });
+  await ctx.sync();
+  return out.filter(function (x) { return !x.table.isNullObject; });
+}
+function checkReport() {
+  return run(async function (ctx) {
+    var body = ctx.document.body;
+    var results = CHECKS.map(function (c) {
+      var r = body.search(c.find, { matchWholeWord: !c.partial, matchCase: false }); r.load("items"); return r;
+    });
+    var boxes = await elementBoxes(ctx);
+    var html = "<h2>Results</h2><ul class='results'>", total = 0;
+    results.forEach(function (r, i) {
+      var n = r.items.length; if (!n) return;
+      total += n;
+      r.items.forEach(function (x) { x.font.highlightColor = "Turquoise"; });
+      html += "<li><b>" + n + "</b> &times; " + esc(CHECKS[i].why) + "</li>";
+    });
+    var unset = [], empty = [];
+    boxes.forEach(function (b) {
+      if (!labelColour((b.label.text || "").trim())) unset.push(b.label.title);
+      var gaps = b.table.values.filter(function (row) {
+        return [RSS.rows.desc, RSS.rows.cond, RSS.rows.rec].indexOf(String(row[0]).trim()) > -1 && !String(row[1] || "").trim();
+      }).map(function (row) { return String(row[0]).trim().split(" ")[0].toLowerCase(); });
+      if (gaps.length) empty.push(codeOf(b.label.title) + " (" + gaps.join(", ") + ")");
+    });
+    if (unset.length) {
+      total += unset.length;
+      html += "<li><b>" + unset.length + "</b> &times; No condition label:<br><span style='color:var(--muted)'>" + unset.slice(0, 15).map(esc).join(", ") + (unset.length > 15 ? "..." : "") + "</span></li>";
+    }
+    if (empty.length) {
+      total += empty.length;
+      html += "<li><b>" + empty.length + "</b> &times; Elements with empty boxes:<br><span style='color:var(--muted)'>" + empty.slice(0, 15).map(esc).join("; ") + (empty.length > 15 ? "..." : "") + "</span></li>";
+    }
+    html += "</ul>";
+    await ctx.sync();
+    $("checkOut").innerHTML = total ? html : "<h2>Results</h2><p>No problems found.</p>";
+    status(total ? total + " items to review" : "No problems found");
+  });
+}
+function clearHighlights() {
+  return run(async function (ctx) {
+    var results = CHECKS.map(function (c) { var r = ctx.document.body.search(c.find, { matchWholeWord: !c.partial }); r.load("items"); return r; });
+    await ctx.sync();
+    results.forEach(function (r) { r.items.forEach(function (x) { x.font.highlightColor = null; }); });
+    await ctx.sync();
+    $("checkOut").innerHTML = ""; status("Highlights cleared");
+  });
+}
+/* Removes empty photo rows, ready for PDF. Text boxes left empty print as blank. */
+function tidy() {
+  return run(async function (ctx) {
+    var boxes = await elementBoxes(ctx);
+    var checks = [];
+    boxes.forEach(function (b) {
+      for (var r = 1; r < b.table.rowCount; r++) {
+        if (isLabelRow(b.table.values[r][0])) continue;
+        var row = { table: b.table, r: r, text: (b.table.values[r] || []).join("").trim(), pics: [] };
+        for (var c = 0; c < 2; c++) { var p = b.table.getCell(r, c).body.inlinePictures; p.load("items"); row.pics.push(p); }
+        checks.push(row);
+      }
+    });
+    await ctx.sync();
+    var emptyRows = checks.filter(function (x) { return !x.text && x.pics.every(function (p) { return !p.items.length; }); });
+    /* delete from the bottom up so row numbers stay valid */
+    emptyRows.reverse().forEach(function (x) { x.table.rows.load("items"); });
+    await ctx.sync();
+    emptyRows.forEach(function (x) { x.table.rows.items[x.r].delete(); });
+    await ctx.sync();
+    status("Removed " + emptyRows.length + " empty photo row" + (emptyRows.length === 1 ? "" : "s"));
+  });
+}
+
+/* ---------- AI writer ---------- */
+function systemPrompt() {
+  return "You are writing part of a Level 3 Building Survey report prepared under the Residential Survey Standard (RSS), for a UK residential property.\n\nHouse rules:\n- " +
+    RSS.aiRules.join("\n- ") +
+    "\n\nCondition labels (choose exactly one; the surveyor will review it): " + RSS.labels.map(function (l) { return l.name; }).join("; ") +
+    ". Use Legal only in the Legal Matters chapter.";
+}
+async function callClaude(system, user, maxTokens) {
+  var key = store("apiKey");
+  if (!key) throw new Error("Add your Claude API key in AI settings first.");
+  var res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+    body: JSON.stringify({ model: store("model") || DEFAULT_MODEL, max_tokens: maxTokens || 2000, system: system, messages: [{ role: "user", content: user }] })
+  });
+  var data = await res.json();
+  if (!res.ok) throw new Error((data.error && data.error.message) || ("API error " + res.status));
+  return data.content.filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("");
+}
+
+async function draft() {
+  var notes = $("aiNotes").value.trim();
+  if (!notes) { status("Add your site notes first.", true); return; }
+  var title = $("aiEl").value;
+  if (!title && inWord()) {
+    await run(async function (ctx) { var cc = await labelAtCursor(ctx); if (cc) title = cc.title; });
+  }
+  if (!title) { status("Choose an element, or click inside one.", true); return; }
+  store("prop", $("aiProp").value);
+  var rec = hasRec(title);
+  var user = "Element: " + title + "\nProperty context: " + ($("aiProp").value || "not given") + "\n\nSite notes:\n" + notes +
+    "\n\nReturn ONLY a JSON object, no other text:\n" +
+    '{"label": "<one condition label>", "description": "<one or two sentences describing the element>", "condition": "<condition and implications, one short paragraph>", "recommendations": ["<short bullet>", "..."]}' +
+    (rec ? "" : "\nThis element has no recommendations section, so return \"recommendations\": [].");
+  var btn = $("aiDraft"); btn.disabled = true; btn.textContent = "Drafting...";
+  try {
+    var txt = await callClaude(systemPrompt(), user);
+    var j = JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1));
+    lastDraft = {
+      title: title, rec: rec,
+      label: labelColour(j.label) ? j.label : null,
+      description: clean(j.description), condition: clean(j.condition),
+      recommendations: (j.recommendations || []).map(clean).filter(Boolean)
+    };
+    showDraft();
+  } catch (e) { status(e.message || String(e), true); }
+  btn.disabled = false; btn.textContent = "Draft from notes";
+}
+function showDraft() {
+  var d = lastDraft, c = labelColour(d.label);
+  $("aiOut").innerHTML = "<div class='preview'><b>" + esc(d.title) + "</b><br>" +
+    (d.label ? "<span class='pl' style='background:" + c + "'>" + esc(d.label) + "</span>" : "<i>No label suggested</i>") +
+    "<p>" + esc(d.description) + "</p><p>" + esc(d.condition) + "</p>" +
+    (d.recommendations.length ? "<h4>" + REC_HEADING + "</h4><ul>" + d.recommendations.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>" : "") +
+    "</div><div class='row'><button class='btn' id='dPut'>Put into report</button><button class='btn ghost' id='dBin'>Discard</button></div>" +
+    "<p class='hint'>Fills this element's boxes. If the element isn't in the report yet, it's added at your cursor first.</p>";
+  $("dPut").onclick = putDraft;
+  $("dBin").onclick = function () { $("aiOut").innerHTML = ""; lastDraft = null; };
+}
+/* Fills one element's boxes and label. d: {title, rec, label, description, condition, recommendations}.
+   If the element isn't in the report: custom elements (e.g. D2a) go after their parent's box, others at the cursor. */
+async function fillElement(ctx, d, allowCursor) {
+  var code = codeOf(d.title);
+  var find = async function (c) {
+    var labs = ctx.document.contentControls.getByTag("rss-label"); labs.load("items/title,items/type");
+    await ctx.sync();
+    return labs.items.filter(function (x) { return codeOf(x.title) === c; })[0] || null;
+  };
+  var lab = await find(code);
+  if (!lab) {
+    var parent = await find(code.replace(/[a-z]+$/, ""));
+    if (parent && parent !== null && code !== code.replace(/[a-z]+$/, "")) {
+      var pt = parent.parentTable;
+      var np = pt.insertParagraph("", "After");
+      np.insertOoxml(pkg(elementXml(d.title, d.rec, hasPhotos(d.title))), "Replace");
+      await ctx.sync();
+    } else if (allowCursor) {
+      await insertXmlAtCursor(ctx, elementXml(d.title, d.rec, hasPhotos(d.title)));
+    } else return false;
+    lab = await find(code);
+  }
+  if (!lab) return false;
+  var t = lab.parentTable; t.load("values"); await ctx.sync();
+  var rowOf = function (name) { for (var r = 0; r < t.values.length; r++) if (String(t.values[r][0]).trim() === name) return r; return -1; };
+  var put = async function (name, texts, bullets) { var r = rowOf(name); if (r > -1) await writeCell(ctx, t.getCell(r, 1), texts, bullets); };
+  await put(RSS.rows.desc, [d.description], false);
+  await put(RSS.rows.cond, [d.condition], false);
+  if (d.recommendations && d.recommendations.length) await put(RSS.rows.rec, d.recommendations, true);
+  if (d.label) await setLabelOn(ctx, lab, d.label);
+  return true;
+}
+function putDraft() {
+  var d = lastDraft;
+  return run(async function (ctx) {
+    var ok = await fillElement(ctx, d, true);
+    status(ok ? "Filled " + d.title : "Couldn't add " + d.title + " to the report.", !ok);
+  });
+}
+
+/* ---------- whole report ---------- */
+var lastReport = null;
+function parseJson(txt) { return JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1)); }
+async function draftChapter(ch, notes, context) {
+  var list = ch.elements.map(function (el) { return el.code + " " + el.name + (el.rec === false ? " (no recommendations)" : ""); }).join("\n");
+  var user = "Property context: " + (context || "not given") + "\n\nThe surveyor's site notes for the whole property:\n" + notes +
+    "\n\nWrite chapter " + ch.code + " " + ch.name + " only. Its elements are:\n" + list +
+    "\n\nInclude only elements the notes cover, and any extra elements the notes give for this chapter (e.g. a second roof as " + ch.code + "2a). Ignore notes that belong to other chapters." +
+    "\nReturn ONLY a JSON object, no other text:\n" +
+    '{"elements": [{"code": "<e.g. ' + ch.code + '1>", "name": "<element name>", "label": "<one condition label>", "description": "<one or two sentences>", "condition": "<condition and implications, one short paragraph>", "recommendations": ["<short bullet>"]}]}' +
+    "\nElements marked (no recommendations) return \"recommendations\": []. If the notes cover nothing in this chapter, return {\"elements\": []}.";
+  var j = parseJson(await callClaude(systemPrompt(), user, 8000));
+  return (j.elements || []).map(function (e) {
+    var known = ch.elements.filter(function (el) { return el.code === e.code; })[0];
+    var title = e.code + " " + (known ? known.name : (e.name || "Other"));
+    return { title: title, rec: hasRec(title), label: labelColour(e.label) ? e.label : null,
+      description: clean(e.description), condition: clean(e.condition),
+      recommendations: (e.recommendations || []).map(clean).filter(Boolean) };
+  });
+}
+async function draftOverview(notes, context) {
+  var user = "Property context: " + (context || "not given") + "\n\nThe surveyor's site notes for the whole property:\n" + notes +
+    "\n\nWrite the report's overall opinion and the limitations specific to this inspection. The overall opinion summarises the condition and the main issues only, in two or three short paragraphs, and never advises whether to buy. Limitations cover things like weather, occupancy and restricted access, only where the notes mention them." +
+    '\nReturn ONLY a JSON object: {"overall_opinion": ["<paragraph>", "..."], "limitations": ["<bullet>", "..."]}';
+  var j = parseJson(await callClaude(systemPrompt(), user, 3000));
+  return { opinion: (j.overall_opinion || []).map(clean).filter(Boolean), limitations: (j.limitations || []).map(clean).filter(Boolean) };
+}
+async function draftWholeReport() {
+  var notes = $("wrNotes").value.trim();
+  if (!notes) { status("Paste or dictate your site notes first.", true); return; }
+  var context = $("aiProp").value; store("prop", context);
+  var btn = $("wrDraft"); btn.disabled = true;
+  var chapters = RSS.chapters.filter(function (c) { return c.elements.length; });
+  var done = 0, failed = [];
+  var tick = function () { btn.textContent = "Drafting... " + done + " of " + (chapters.length + 1); };
+  tick();
+  var jobs = chapters.map(function (ch) {
+    return draftChapter(ch, notes, context).then(function (r) { done++; tick(); return r; })
+      .catch(function (e) { done++; tick(); failed.push(ch.code + " (" + (e.message || e) + ")"); return []; });
+  });
+  jobs.push(draftOverview(notes, context).then(function (r) { done++; tick(); return r; })
+    .catch(function (e) { done++; tick(); failed.push("overview (" + (e.message || e) + ")"); return null; }));
+  var res = await Promise.all(jobs);
+  var overview = res.pop();
+  lastReport = { elements: [].concat.apply([], res), overview: overview };
+  btn.disabled = false; btn.textContent = "Draft whole report";
+  showReport(failed);
+}
+function showReport(failed) {
+  var r = lastReport;
+  var h = "<div class='preview'><b>" + r.elements.length + " elements drafted</b>";
+  if (r.overview && r.overview.opinion.length) h += "<h4>Overall opinion</h4><p>" + r.overview.opinion.map(esc).join("</p><p>") + "</p>";
+  r.elements.forEach(function (d) {
+    var c = labelColour(d.label);
+    h += "<details style='margin-top:6px'><summary style='cursor:pointer'><b>" + esc(d.title) + "</b> " +
+      (d.label ? "<span class='pl' style='background:" + c + "'>" + esc(d.label) + "</span>" : "") + "</summary>" +
+      "<p>" + esc(d.description) + "</p><p>" + esc(d.condition) + "</p>" +
+      (d.recommendations.length ? "<ul>" + d.recommendations.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : "") + "</details>";
+  });
+  h += "</div>";
+  if (failed.length) h += "<p class='hint' style='color:#B71C1C'>Not drafted: " + failed.map(esc).join("; ") + ". Try again, or do those elements one at a time.</p>";
+  h += "<div class='row'><button class='btn' id='wrPut'>Put all into report</button><button class='btn ghost' id='wrBin'>Discard</button></div>" +
+    "<p class='hint'>Fills each element's boxes and label, plus the overall opinion and limitations. Text already in a box is kept, with the draft added below it.</p>";
+  $("wrOut").innerHTML = h;
+  $("wrPut").onclick = putReport;
+  $("wrBin").onclick = function () { $("wrOut").innerHTML = ""; lastReport = null; };
+}
+/* Fills a labelled box such as "Overall opinion" or "Limitations for this inspection". */
+async function fillBox(ctx, label, texts, bullets) {
+  if (!texts || !texts.length) return;
+  var tables = ctx.document.body.tables; tables.load("items/values");
+  await ctx.sync();
+  var t = tables.items.filter(function (x) { return x.values[0] && String(x.values[0][0]).trim() === label; })[0];
+  if (t) await writeCell(ctx, t.getCell(0, 1), texts, bullets);
+}
+function putReport() {
+  var r = lastReport;
+  return run(async function (ctx) {
+    var missed = [];
+    for (var i = 0; i < r.elements.length; i++) {
+      status("Filling " + r.elements[i].title + "...");
+      var ok = await fillElement(ctx, r.elements[i], false);
+      if (!ok) missed.push(r.elements[i].title);
+    }
+    if (r.overview) {
+      await fillBox(ctx, "Overall opinion", r.overview.opinion, false);
+      await fillBox(ctx, "Limitations for this inspection", r.overview.limitations, true);
+    }
+    status("Report filled" + (missed.length ? ". Not found in the report: " + missed.join(", ") : ""), !!missed.length);
+    if (missed.length) $("wrOut").insertAdjacentHTML("beforeend", "<p class='hint' style='color:#B71C1C'>Not found in the report, so not filled: " + missed.map(esc).join(", ") + ". Use Insert sections to add them, then Put all into report again or draft them one at a time.</p>");
+  });
+}
+async function rewrite() {
+  var btn = $("aiRewrite");
+  await run(async function (ctx) {
+    var sel = ctx.document.getSelection(); sel.load("text"); await ctx.sync();
+    if (!sel.text.trim()) { status("Select some text in the report first.", true); return; }
+    btn.disabled = true; btn.textContent = "Rewriting...";
+    try {
+      var out = await callClaude(systemPrompt(), "Rewrite the following report text in house style. Keep every fact, add nothing new, keep it concise. Return only the rewritten text, no commentary.\n\n" + sel.text);
+      sel.insertText(clean(out), "Replace");
+      await ctx.sync();
+      status("Rewritten");
+    } finally { btn.disabled = false; btn.textContent = "Rewrite selection"; }
+  });
+}
+
+/* ---------- build the sidebar ---------- */
+function showTab(t) {
+  if (!$(t)) return;
+  document.querySelectorAll("nav button, section").forEach(function (x) { x.classList.remove("on"); });
+  document.querySelector("nav button[data-t=" + t + "]").classList.add("on"); $(t).classList.add("on");
+}
+function build() {
+  document.querySelectorAll("nav button").forEach(function (b) { b.onclick = function () { showTab(b.dataset.t); }; });
+
+  /* sections */
+  var cl = $("chapterList");
+  RSS.chapters.filter(function (c) { return !c.front; }).forEach(function (ch) {
+    var d = document.createElement("details"); d.className = "ch";
+    var s = document.createElement("summary");
+    s.innerHTML = "<span>" + ch.code + "  " + esc(ch.name) + "</span><small>+ chapter</small>";
+    s.querySelector("small").onclick = function (e) { e.preventDefault(); insertChapter(ch); };
+    d.appendChild(s);
+    ch.elements.forEach(function (el) {
+      var b = document.createElement("button"); b.className = "el";
+      var t = el.code + " " + el.name;
+      b.textContent = t;
+      b.onclick = function () { insertElement(t, el.rec !== false, hasPhotos(t)); };
+      d.appendChild(b);
+    });
+    cl.appendChild(d);
+    var o = document.createElement("option"); o.value = ch.code; o.textContent = ch.code + "  " + ch.name; $("customCh").appendChild(o);
+  });
+  $("customBtn").onclick = function () {
+    var name = $("customName").value.trim(); if (!name) { status("Type a name for the element.", true); return; }
+    var code = $("customCh").value;
+    var title = /^[A-Z]\d/.test(name) ? name : code + " " + name;
+    insertElement(title, hasRec(title), hasPhotos(title));
+  };
+  $("photoBtn").onclick = function () { $("photoFile").click(); };
+  $("photoFile").onchange = function () { var f = Array.prototype.slice.call(this.files); this.value = ""; addPhotoFiles(f); };
+
+  /* labels */
+  RSS.labels.forEach(function (l) {
+    var b = document.createElement("button"); b.className = "lab";
+    b.innerHTML = "<i class='sw' style='background:" + l.colour + "'></i><div><b>" + esc(l.name) + "</b><span>" + esc(l.note) + "</span></div>";
+    b.onclick = function () { setLabel(l.name); };
+    $("labelList").appendChild(b);
+  });
+  $("summaryBtn").onclick = updateSummary;
+
+  /* wording */
+  var cats = ["All categories"].concat(RSS.wording.map(function (w) { return w.cat; }).filter(function (c, i, a) { return a.indexOf(c) === i; }));
+  cats.forEach(function (c) { var o = document.createElement("option"); o.textContent = c; $("wCat").appendChild(o); });
+  function renderWording() {
+    var q = $("wSearch").value.toLowerCase(), cat = $("wCat").value, list = $("wList");
+    list.innerHTML = "";
+    RSS.wording.filter(function (w) {
+      return (cat === "All categories" || w.cat === cat) && (!q || (w.title + " " + w.text).toLowerCase().indexOf(q) > -1);
+    }).forEach(function (w) {
+      var div = document.createElement("div"); div.className = "w";
+      div.innerHTML = "<span class='k'>" + (w.kind === "bullet" ? "bullet" : "para") + "</span><b>" + esc(w.title) + "</b><p>" + esc(w.text) + "</p>";
+      div.title = w.text;
+      div.onclick = function () { insertWording(w); };
+      list.appendChild(div);
+    });
+  }
+  $("wSearch").oninput = renderWording; $("wCat").onchange = renderWording; renderWording();
+
+  /* AI */
+  var sel = $("aiEl");
+  var o0 = document.createElement("option"); o0.value = ""; o0.textContent = "Element at my cursor"; sel.appendChild(o0);
+  RSS.chapters.filter(function (c) { return c.elements.length; }).forEach(function (ch) {
+    var g = document.createElement("optgroup"); g.label = ch.code + "  " + ch.name;
+    ch.elements.forEach(function (el) { var o = document.createElement("option"); o.value = o.textContent = el.code + " " + el.name; g.appendChild(o); });
+    sel.appendChild(g);
+  });
+  $("aiProp").value = store("prop") || "";
+  $("apiKey").value = store("apiKey") || "";
+  $("model").value = store("model") || DEFAULT_MODEL;
+  $("saveSettings").onclick = function () { store("apiKey", $("apiKey").value.trim()); store("model", $("model").value.trim() || DEFAULT_MODEL); status("Settings saved"); };
+  $("aiDraft").onclick = draft;
+  $("aiRewrite").onclick = rewrite;
+  $("wrDraft").onclick = draftWholeReport;
+
+  /* check */
+  $("checkBtn").onclick = checkReport;
+  $("clearBtn").onclick = clearHighlights;
+  $("tidyBtn").onclick = tidy;
+
+  /* ribbon buttons open the sidebar on a given tab: taskpane.html?tab=labels */
+  var m = /[?&]tab=(\w+)/.exec(location.search); if (m) showTab(m[1]);
+}
+
+build();
+if (typeof Office !== "undefined") {
+  Office.onReady(function (info) {
+    if (info.host !== Office.HostType.Word) status("This add-in works in Word.", true);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RSS Survey Assistant: Word add-in manifest.
+     Before installing, replace every https://leeprowle1984.github.io/rss-addin with the web address where you host the add-in files. -->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+           xsi:type="TaskPaneApp">
+  <Id>9c5b69ca-f5e2-446c-9661-f352be5a8eee</Id>
+  <Version>1.1.0.0</Version>
+  <ProviderName>Residential Survey Standard</ProviderName>
+  <DefaultLocale>en-GB</DefaultLocale>
+  <DisplayName DefaultValue="RSS Survey Assistant"/>
+  <Description DefaultValue="Build Level 3 Building Survey reports under the Residential Survey Standard: sections, condition labels, standard wording and AI drafting from site notes."/>
+  <IconUrl DefaultValue="https://leeprowle1984.github.io/rss-addin/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://leeprowle1984.github.io/rss-addin/icon-64.png"/>
+  <SupportUrl DefaultValue="https://leeprowle1984.github.io/rss-addin/taskpane.html"/>
+  <AppDomains>
+    <AppDomain>https://api.anthropic.com</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Document"/>
+  </Hosts>
+  <Requirements>
+    <Sets DefaultMinVersion="1.3">
+      <Set Name="WordApi" MinVersion="1.3"/>
+    </Sets>
+  </Requirements>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://leeprowle1984.github.io/rss-addin/taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Desc"/>
+            <LearnMoreUrl resid="Taskpane.Url"/>
+          </GetStarted>
+          <FunctionFile resid="Taskpane.Url"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <CustomTab id="RSS.Tab">
+              <Group id="RSS.Group">
+                <Label resid="Group.Label"/>
+                <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                <Control xsi:type="Button" id="RSS.Sections">
+                  <Label resid="Sections.Label"/>
+                  <Supertip><Title resid="Sections.Label"/><Description resid="Sections.Tip"/></Supertip>
+                  <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                  <Action xsi:type="ShowTaskpane"><TaskpaneId>RSSPane</TaskpaneId><SourceLocation resid="Sections.Url"/></Action>
+                </Control>
+                <Control xsi:type="Button" id="RSS.Labels">
+                  <Label resid="Labels.Label"/>
+                  <Supertip><Title resid="Labels.Label"/><Description resid="Labels.Tip"/></Supertip>
+                  <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                  <Action xsi:type="ShowTaskpane"><TaskpaneId>RSSPane</TaskpaneId><SourceLocation resid="Labels.Url"/></Action>
+                </Control>
+                <Control xsi:type="Button" id="RSS.Wording">
+                  <Label resid="Wording.Label"/>
+                  <Supertip><Title resid="Wording.Label"/><Description resid="Wording.Tip"/></Supertip>
+                  <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                  <Action xsi:type="ShowTaskpane"><TaskpaneId>RSSPane</TaskpaneId><SourceLocation resid="Wording.Url"/></Action>
+                </Control>
+                <Control xsi:type="Button" id="RSS.AI">
+                  <Label resid="AI.Label"/>
+                  <Supertip><Title resid="AI.Label"/><Description resid="AI.Tip"/></Supertip>
+                  <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                  <Action xsi:type="ShowTaskpane"><TaskpaneId>RSSPane</TaskpaneId><SourceLocation resid="AI.Url"/></Action>
+                </Control>
+                <Control xsi:type="Button" id="RSS.Check">
+                  <Label resid="Check.Label"/>
+                  <Supertip><Title resid="Check.Label"/><Description resid="Check.Tip"/></Supertip>
+                  <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                  <Action xsi:type="ShowTaskpane"><TaskpaneId>RSSPane</TaskpaneId><SourceLocation resid="Check.Url"/></Action>
+                </Control>
+              </Group>
+              <Label resid="Tab.Label"/>
+            </CustomTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16" DefaultValue="https://leeprowle1984.github.io/rss-addin/icon-16.png"/>
+        <bt:Image id="Icon.32" DefaultValue="https://leeprowle1984.github.io/rss-addin/icon-32.png"/>
+        <bt:Image id="Icon.80" DefaultValue="https://leeprowle1984.github.io/rss-addin/icon-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://leeprowle1984.github.io/rss-addin/taskpane.html"/>
+        <bt:Url id="Sections.Url" DefaultValue="https://leeprowle1984.github.io/rss-addin/taskpane.html?tab=sections"/>
+        <bt:Url id="Labels.Url" DefaultValue="https://leeprowle1984.github.io/rss-addin/taskpane.html?tab=labels"/>
+        <bt:Url id="Wording.Url" DefaultValue="https://leeprowle1984.github.io/rss-addin/taskpane.html?tab=wording"/>
+        <bt:Url id="AI.Url" DefaultValue="https://leeprowle1984.github.io/rss-addin/taskpane.html?tab=ai"/>
+        <bt:Url id="Check.Url" DefaultValue="https://leeprowle1984.github.io/rss-addin/taskpane.html?tab=check"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="Tab.Label" DefaultValue="RSS"/>
+        <bt:String id="Group.Label" DefaultValue="RSS Survey"/>
+        <bt:String id="GetStarted.Title" DefaultValue="RSS Survey Assistant is ready"/>
+        <bt:String id="Sections.Label" DefaultValue="Insert sections"/>
+        <bt:String id="Labels.Label" DefaultValue="Condition labels"/>
+        <bt:String id="Wording.Label" DefaultValue="Standard wording"/>
+        <bt:String id="AI.Label" DefaultValue="AI Writer"/>
+        <bt:String id="Check.Label" DefaultValue="Check report"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Desc" DefaultValue="Open the RSS tab on the ribbon to start."/>
+        <bt:String id="Sections.Tip" DefaultValue="Insert chapters and element boxes at the cursor."/>
+        <bt:String id="Labels.Tip" DefaultValue="Set the condition label for the element you are in, and update the summary table."/>
+        <bt:String id="Wording.Tip" DefaultValue="Insert standard paragraphs and bullet points."/>
+        <bt:String id="AI.Tip" DefaultValue="Draft an element from your site notes, or rewrite selected text."/>
+        <bt:String id="Check.Tip" DefaultValue="Find empty boxes, missing labels and words to avoid, and tidy for PDF."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>
